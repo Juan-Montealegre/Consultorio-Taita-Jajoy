@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservas - Consultorio de Medicina Tradicional</title>
+    <link rel="stylesheet" href="css/estilos.css">
+</head>
+<body>
+    <header>
+        <h1>Reservas</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Inicio</a></li>
+                <li><a href="productos.html">Productos</a></li>
+                <li><a href="testimonios.html">Testimonios</a></li>
+                <li><a href="precios.html">Precios</a></li>
+                <li><a href="resultados.html">Resultados</a></li>
+                <li><a href="reservas.html">Reservas</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <section>
+            <h2>Realiza tu Reserva</h2>
+            <form action="ReservaServlet" method="post">
+                <label for="nombre">Nombre:</label>
+                <input type="text" id="nombre" name="nombre" required>
+                
+                <label for="fecha">Fecha:</label>
+                <input type="date" id="fecha" name="fecha" required>
+                
+                <label for="hora">Hora:</label>
+                <input type="time" id="hora" name="hora" required>
+                
+                <input type="submit" value="Reservar">
+            </form>
+        </section>
+        <section>
+            <h2>Confirma tu cita</h2>
+            <p>Para confirmar tu cita, por favor haz clic en el siguiente enlace:</p>
+            <a href="https://wa.me/573022236861">Confirmar Cita en WhatsApp</a>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2025 Taita Jajoy - Consultorio de Medicina Tradicional. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>
