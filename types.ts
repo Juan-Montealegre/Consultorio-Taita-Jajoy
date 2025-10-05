@@ -15,3 +15,8 @@ export interface Appointment {
   userName: string;
   userEmail: string;
 }
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+}

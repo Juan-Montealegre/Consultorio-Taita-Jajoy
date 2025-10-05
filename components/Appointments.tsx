@@ -1,12 +1,22 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { SERVICES, COLOMBIAN_HOLIDAYS } from '../constants';
+import {
+  SERVICES,
+  COLOMBIAN_HOLIDAYS,
+  BOOKING_PUBLIC_KEY,
+  BOOKING_SERVICE_ID,
+  BOOKING_CLIENT_TEMPLATE_ID,
+  BOOKING_DOCTOR_TEMPLATE_ID,
+  RESCHEDULE_PUBLIC_KEY,
+  RESCHEDULE_SERVICE_ID,
+  RESCHEDULE_CLIENT_TEMPLATE_ID,
+  RESCHEDULE_DOCTOR_TEMPLATE_ID,
+} from '../constants';
 import { Appointment } from '../types';
 
 declare global {
   interface Window {
     emailjs: {
-      init: (options: { publicKey: string }) => void;
-      send: (serviceID: string, templateID: string, params: object) => Promise<{ status: number; text: string }>;
+      send: (serviceID: string, templateID: string, params: object, options?: { publicKey: string }) => Promise<{ status: number; text: string }>;
     };
   }
 }
@@ -34,11 +44,8 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [dateError, setDateError] = useState<string | null>(null);
 
+
   useEffect(() => {
-    const publicKey = 'SwfNz2A1pwSevQqcn';
-    if (window.emailjs) {
-      window.emailjs.init({ publicKey });
-    }
     const storedAppointments = localStorage.getItem('bookedAppointments');
     if (storedAppointments) {
       setBookedAppointments(JSON.parse(storedAppointments));
@@ -53,7 +60,8 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
         service: appointmentToReschedule.service,
         message: '' // Clear message as it's context-specific
       });
-      setSelectedDate(appointmentToReschedule.date);
+      setSelectedDate(''); // Clear date so user must pick a new one
+      setSelectedTime('');
     } else if (currentUser) {
       setFormData(prev => ({ ...prev, email: currentUser, name: '', service: SERVICES[0], message: '' }));
       setSelectedDate('');
@@ -96,37 +104,28 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   
-  const isDateDisabled = (dateString: string): boolean => {
-    if (!dateString) return false;
-
-    const [year, month, day] = dateString.split('-').map(Number);
-    // JavaScript's Date month is 0-indexed (0-11)
-    const date = new Date(year, month - 1, day);
-    const dayOfWeek = date.getDay();
-
-    // Check for weekends (Sunday is 0, Saturday is 6)
-    if (dayOfWeek === 0 || dayOfWeek === 6) {
-      return true;
-    }
-
-    // Check for holidays
-    if (COLOMBIAN_HOLIDAYS.includes(dateString)) {
-      return true;
-    }
-
-    return false;
-  };
-  
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = e.target.value;
-    if (isDateDisabled(newDate)) {
-        setDateError('El Taita no atiende los fines de semana ni festivos. Por favor, elige otra fecha.');
-        setSelectedDate('');
-        setSelectedTime('');
+    setSelectedTime('');
+    setDateError(null);
+
+    if (!newDate) {
+      setSelectedDate('');
+      return;
+    }
+
+    // Using T00:00:00 to avoid timezone interpretation issues
+    const date = new Date(`${newDate}T00:00:00`);
+    const dayOfWeek = date.getDay(); // 0 for Sunday, 6 for Saturday
+
+    if (COLOMBIAN_HOLIDAYS.includes(newDate)) {
+      setSelectedDate('');
+      setDateError('La fecha seleccionada es un día festivo. Por favor, elige otro día.');
+    } else if (dayOfWeek === 6 || dayOfWeek === 0) {
+      setSelectedDate('');
+      setDateError('No se agendan citas los fines de semana. Por favor, elige un día de Lunes a Viernes.');
     } else {
-        setDateError(null);
-        setSelectedDate(newDate);
-        setSelectedTime('');
+      setSelectedDate(newDate);
     }
   };
 
@@ -140,33 +139,66 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
     setIsSubmitting(true);
 
     const appointmentDateTime = new Date(`${selectedDate}T${selectedTime}:00`);
-    const formattedDate = appointmentDateTime.toLocaleDateString('es-ES');
+    const formattedDate = appointmentDateTime.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     const formattedTime = appointmentDateTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute:'2-digit' });
+
+    let clientEmailParams: Record<string, string>;
+    let doctorEmailParams: Record<string, string>;
     
-    const clientEmailParams = {
-      to_email: formData.email,
-      user_name: formData.name,
-      service: formData.service,
-      appointment_date: formattedDate,
-      appointment_time: formattedTime,
-    };
+    const publicKey = isRescheduleMode ? RESCHEDULE_PUBLIC_KEY : BOOKING_PUBLIC_KEY;
+    const serviceID = isRescheduleMode ? RESCHEDULE_SERVICE_ID : BOOKING_SERVICE_ID;
+    const clientTemplateID = isRescheduleMode ? RESCHEDULE_CLIENT_TEMPLATE_ID : BOOKING_CLIENT_TEMPLATE_ID;
+    const doctorTemplateID = isRescheduleMode ? RESCHEDULE_DOCTOR_TEMPLATE_ID : BOOKING_DOCTOR_TEMPLATE_ID;
 
-    const doctorEmailParams = {
-        client_name: formData.name,
-        client_email: formData.email,
-        service: formData.service,
-        appointment_date: formattedDate,
-        appointment_time: formattedTime,
-        message: formData.message || 'Ninguno',
-    };
+    if (isRescheduleMode && appointmentToReschedule) {
+        const oldAppointmentDateTime = new Date(`${appointmentToReschedule.date}T${appointmentToReschedule.time}:00`);
+        const formattedOldDate = oldAppointmentDateTime.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        const formattedOldTime = oldAppointmentDateTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
 
-    const serviceID = 'service_jp5auoj';
-    const clientTemplateID = 'template_2bio6kd';
-    const doctorTemplateID = 'template_v9tvb5r';
+        clientEmailParams = {
+            to_email: formData.email,
+            user_name: formData.name,
+            service: formData.service,
+            old_appointment_date: formattedOldDate,
+            old_appointment_time: formattedOldTime,
+            new_appointment_date: formattedDate,
+            new_appointment_time: formattedTime,
+        };
 
-    window.emailjs.send(serviceID, clientTemplateID, clientEmailParams)
+        doctorEmailParams = {
+            client_name: formData.name,
+            client_email: formData.email,
+            service: formData.service,
+            old_appointment_date: formattedOldDate,
+            old_appointment_time: formattedOldTime,
+            new_appointment_date: formattedDate,
+            new_appointment_time: formattedTime,
+            message: formData.message || 'El cliente no dejó un mensaje.',
+        };
+    } else {
+         clientEmailParams = {
+            to_email: formData.email,
+            user_name: formData.name,
+            service: formData.service,
+            appointment_date: formattedDate,
+            appointment_time: formattedTime,
+        };
+
+        doctorEmailParams = {
+            client_name: formData.name,
+            client_email: formData.email,
+            service: formData.service,
+            appointment_date: formattedDate,
+            appointment_time: formattedTime,
+            message: formData.message || 'Ninguno',
+        };
+    }
+    
+    const emailjsOptions = { publicKey };
+
+    window.emailjs.send(serviceID, clientTemplateID, clientEmailParams, emailjsOptions)
       .then(() => {
-        return window.emailjs.send(serviceID, doctorTemplateID, doctorEmailParams);
+        return window.emailjs.send(serviceID, doctorTemplateID, doctorEmailParams, emailjsOptions);
       })
       .then(() => {
         const newAppointment: Appointment = {
@@ -202,13 +234,15 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
       })
       .catch((err) => {
         console.error('EMAILJS FAILED:', JSON.stringify(err, null, 2));
-        setFormMessage('Hubo un error al procesar la cita. Por favor, revisa los datos o contacta por WhatsApp.');
+        if (err && err.status === 412) {
+          setFormMessage('Estamos experimentando problemas técnicos con las notificaciones por correo. Tu cita NO ha sido agendada. Por favor, contáctanos directamente por WhatsApp para asegurar tu horario. Disculpa las molestias.');
+        } else {
+          setFormMessage('Hubo un error al procesar la cita. Por favor, revisa los datos o contacta por WhatsApp.');
+        }
         setTimeout(() => setFormMessage(null), 10000);
       })
       .finally(() => {
-          if (!isRescheduleMode) {
-            setIsSubmitting(false);
-          }
+        setIsSubmitting(false);
       });
   };
 
@@ -220,7 +254,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
         <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-text-light mb-2">{isRescheduleMode ? 'Reprograma tu Cita' : 'Agenda tu Cita'}</h2>
             <p className="text-lg text-text-light/70 max-w-3xl mx-auto">
-                {isRescheduleMode ? 'Elige una nueva fecha y hora para tu consulta.' : 'Elige una fecha y hora. La confirmación se enviará a tu correo.'}
+                {isRescheduleMode ? `Cita actual para: ${appointmentToReschedule?.service} el ${new Date(`${appointmentToReschedule?.date}T00:00:00`).toLocaleDateString('es-ES', { month: 'long', day: 'numeric' })}. Elige una nueva fecha y hora.` : 'Elige una fecha y hora. La confirmación se enviará a tu correo.'}
             </p>
              <div className="mt-4 h-1 w-24 bg-secondary mx-auto rounded-full"></div>
         </div>
@@ -261,10 +295,10 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
             </div>
 
             <div>
-              <label htmlFor="date" className="block text-sm font-bold text-text-light/80 mb-1">1. Selecciona una Fecha</label>
+              <label htmlFor="date" className="block text-sm font-bold text-text-light/80 mb-1">1. Selecciona una Fecha (Lunes a Viernes)</label>
               <input type="date" name="date" id="date" required min={today} value={selectedDate} onChange={handleDateChange} className="w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light" />
               {dateError && (
-                    <p className="text-secondary text-xs mt-1">{dateError}</p>
+                  <p className="text-secondary text-xs mt-1">{dateError}</p>
               )}
             </div>
             
@@ -296,11 +330,11 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
 
              <div>
               <label htmlFor="message" className="block text-sm font-bold text-text-light/80 mb-1">Mensaje Adicional (opcional)</label>
-              <textarea name="message" id="message" rows={3} value={formData.message} onChange={handleChange} className="w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light" placeholder="Cuéntanos un poco sobre lo que te gustaría tratar..."></textarea>
+              <textarea name="message" id="message" rows={3} value={formData.message} onChange={handleChange} className="w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light" placeholder={isRescheduleMode ? "Puedes indicar aquí el motivo de la reprogramación..." : "Cuéntanos un poco sobre lo que te gustaría tratar..."}></textarea>
             </div>
 
             {formMessage && (
-                <p className={`text-center p-3 rounded-md text-sm ${formMessage.includes('Error') ? 'bg-red-900/50 text-red-200' : 'bg-accent/20 text-accent'}`}>
+                <p className={`text-center p-3 rounded-md text-sm ${formMessage.includes('error') || formMessage.includes('NO ha sido') ? 'bg-red-900/50 text-red-200' : 'bg-accent/20 text-accent'}`}>
                     {formMessage}
                 </p>
             )}

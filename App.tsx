@@ -9,6 +9,7 @@ import WhatsAppButton from './components/WhatsAppButton';
 import Login from './components/Login';
 import MyAccount from './components/MyAccount';
 import { Appointment } from './types';
+import Chatbot from './components/Chatbot';
 
 export enum Page {
   Home = 'Home',
@@ -96,6 +97,7 @@ const App: React.FC = () => {
         {renderPage()}
       </main>
       <WhatsAppButton phoneNumber="573022236861" />
+      <Chatbot />
       <Footer />
     </div>
   );
