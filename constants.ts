@@ -1,6 +1,6 @@
 import { Product } from './types';
 
-export const LOGO_URL = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZGh0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjRjBGNkZDIj4KICAgIDxwYXRoIGQ9Ik0xMiA1LjljMS4xNiAwIDIuMSAuOTQgMi4xIDIuMXMtLjk0IDIuMS0yLjEgMi4xUzkuOSA5LjE2IDkuOSA4cy45NC0yLjEgMi4xLTIuMW0wIDljMi45NyAwIDYuMSAxLjQ2IDYuMSAyLjF2MS4xSDUuOVYxN2MwLS42NCAzLjEzLTIuMSA2LjEtMi4xTTEyIDRDOS43OSA0IDggNS43OSA4IDhzMS43OSA0IDQgNCA0LTEuNzkgNC00LTEuNzktNC00LTR6bTAgOWMtMi42NyAwLTggMS4zNC04IDR2M2gxNnYtM2MwLTIuNjYtNS4zMy00LTgtNHoiLz4KICAgIDxwYXRoIGQ9Ik0xOS40MSw3LjQxbC0xLjgzLTEuODNsLTEuNDEsMS40MWwxLjgzLDEuODNMMTkuNDEsNy40MXogTTQuNTksNy40MWwxLjQxLTEuNDFsMS44MywxLjgzbC0xLjQxLDEuNDFMNC41OSw3LjQxeiBNMTIsMSBsLTEsMmgyTDEyLDF6Ii8+Cjwvc3ZnPg==';
+export const LOGO_URL = '/logo/Logo.png';
 
 export const PRODUCTS: Product[] = [
   {
@@ -60,4 +60,5 @@ export const SERVICES: string[] = [
   'Tratamiento del "descuajo" infantil',
   'Recomendación de medicina ancestral (Yagé, plantas, pomadas)',
   'Armonización y equilibrio espiritual',
+  'Consulta personalizada',
 ];

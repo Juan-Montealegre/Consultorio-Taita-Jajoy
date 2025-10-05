@@ -14,8 +14,8 @@ const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
           className="flex items-center space-x-3 cursor-pointer"
           onClick={() => onNavigate(Page.Home)}
         >
-          <img src={LOGO_URL} alt="Taita Jajoy Logo" className="w-10 h-10" />
-          <span className="text-xl font-serif font-bold tracking-wider">Taita Jajoy</span>
+          <img src={LOGO_URL} alt=" Taita Jajoy Logo" className="w-10 h-10 object-contain" />
+          <span className="text-xl font-serif font-bold tracking-wider">Consultorio Medicina Ancestral</span>
         </div>
         <nav className="hidden md:flex items-center space-x-6 font-semibold">
           <button onClick={() => onNavigate(Page.Home)} className="hover:text-secondary transition duration-300">Inicio</button>

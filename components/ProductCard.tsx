@@ -6,6 +6,10 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const phoneNumber = "573022236861";
+  const message = `Hola, estoy interesado/a en el producto "${product.name}". Me gustaría recibir más información, incluyendo dónde puedo comprarlo. Gracias.`;
+  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+
   return (
     <div className="bg-primary/20 border border-primary/50 rounded-lg shadow-lg overflow-hidden transform hover:-translate-y-2 transition-transform duration-300 flex flex-col group">
       <div className="relative h-56">
@@ -17,9 +21,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <p className="text-text-light/70 text-sm flex-grow">{product.description}</p>
         <div className="mt-4 flex justify-between items-center">
           <span className="text-lg font-bold text-secondary">{product.price}</span>
-          <button className="bg-secondary text-white text-sm font-bold py-2 px-4 rounded-full hover:bg-secondary/80 transition-colors duration-300">
-            Añadir al Carrito
-          </button>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-secondary text-white text-sm font-bold py-2 px-4 rounded-full hover:bg-secondary/80 transition-colors duration-300"
+          >
+            Más Información
+          </a>
         </div>
       </div>
     </div>
