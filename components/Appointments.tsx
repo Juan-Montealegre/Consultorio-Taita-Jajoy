@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { SERVICES } from '../constants';
+import { SERVICES, COLOMBIAN_HOLIDAYS } from '../constants';
+import { Appointment } from '../types';
 
-// Inform TypeScript that emailjs will be available on the window object
 declare global {
   interface Window {
     emailjs: {
@@ -11,8 +11,16 @@ declare global {
   }
 }
 
-const Appointments: React.FC = () => {
-  const [bookedAppointments, setBookedAppointments] = useState<Date[]>([]);
+interface AppointmentsProps {
+  currentUser: string | null;
+  appointmentToReschedule?: Appointment | null;
+  onRescheduleComplete?: () => void;
+}
+
+const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToReschedule, onRescheduleComplete }) => {
+  const isRescheduleMode = !!appointmentToReschedule;
+
+  const [bookedAppointments, setBookedAppointments] = useState<Appointment[]>([]);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -24,14 +32,34 @@ const Appointments: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [formMessage, setFormMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [dateError, setDateError] = useState<string | null>(null);
 
-  // Initialize EmailJS when the component mounts
   useEffect(() => {
     const publicKey = 'SwfNz2A1pwSevQqcn';
     if (window.emailjs) {
       window.emailjs.init({ publicKey });
     }
+    const storedAppointments = localStorage.getItem('bookedAppointments');
+    if (storedAppointments) {
+      setBookedAppointments(JSON.parse(storedAppointments));
+    }
   }, []);
+
+  useEffect(() => {
+    if (isRescheduleMode && appointmentToReschedule) {
+      setFormData({
+        name: appointmentToReschedule.userName,
+        email: appointmentToReschedule.userEmail,
+        service: appointmentToReschedule.service,
+        message: '' // Clear message as it's context-specific
+      });
+      setSelectedDate(appointmentToReschedule.date);
+    } else if (currentUser) {
+      setFormData(prev => ({ ...prev, email: currentUser, name: '', service: SERVICES[0], message: '' }));
+      setSelectedDate('');
+      setSelectedTime('');
+    }
+  }, [currentUser, isRescheduleMode, appointmentToReschedule]);
 
   const isEmailValid = useMemo(() => {
     if (!formData.email) return false;
@@ -53,9 +81,8 @@ const Appointments: React.FC = () => {
     if (!selectedDate) return [];
 
     const isSlotBooked = (time: string) => {
-        const appointmentDateTime = new Date(`${selectedDate}T${time}:00`);
         return bookedAppointments.some(
-            booked => new Date(booked).getTime() === appointmentDateTime.getTime()
+            booked => booked.date === selectedDate && booked.time === time
         );
     };
 
@@ -65,14 +92,42 @@ const Appointments: React.FC = () => {
     }));
   }, [selectedDate, timeSlots, bookedAppointments]);
 
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
   
+  const isDateDisabled = (dateString: string): boolean => {
+    if (!dateString) return false;
+
+    const [year, month, day] = dateString.split('-').map(Number);
+    // JavaScript's Date month is 0-indexed (0-11)
+    const date = new Date(year, month - 1, day);
+    const dayOfWeek = date.getDay();
+
+    // Check for weekends (Sunday is 0, Saturday is 6)
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      return true;
+    }
+
+    // Check for holidays
+    if (COLOMBIAN_HOLIDAYS.includes(dateString)) {
+      return true;
+    }
+
+    return false;
+  };
+  
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedDate(e.target.value);
-    setSelectedTime('');
+    const newDate = e.target.value;
+    if (isDateDisabled(newDate)) {
+        setDateError('El Taita no atiende los fines de semana ni festivos. Por favor, elige otra fecha.');
+        setSelectedDate('');
+        setSelectedTime('');
+    } else {
+        setDateError(null);
+        setSelectedDate(newDate);
+        setSelectedTime('');
+    }
   };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -91,7 +146,6 @@ const Appointments: React.FC = () => {
     const clientEmailParams = {
       to_email: formData.email,
       user_name: formData.name,
-      user_email: formData.email,
       service: formData.service,
       appointment_date: formattedDate,
       appointment_time: formattedTime,
@@ -110,38 +164,51 @@ const Appointments: React.FC = () => {
     const clientTemplateID = 'template_2bio6kd';
     const doctorTemplateID = 'template_v9tvb5r';
 
-    console.log("Attempting to send client confirmation email with params:", JSON.stringify(clientEmailParams, null, 2));
-    console.log("Attempting to send doctor notification email with params:", JSON.stringify(doctorEmailParams, null, 2));
-
     window.emailjs.send(serviceID, clientTemplateID, clientEmailParams)
       .then(() => {
         return window.emailjs.send(serviceID, doctorTemplateID, doctorEmailParams);
       })
       .then(() => {
-        setBookedAppointments(prev => [...prev, appointmentDateTime]);
-        setFormMessage('¡Cita agendada con éxito! Se ha enviado una confirmación a tu correo.');
+        const newAppointment: Appointment = {
+          id: new Date().getTime().toString(),
+          date: selectedDate,
+          time: selectedTime,
+          service: formData.service,
+          userName: formData.name,
+          userEmail: formData.email,
+        };
         
-        setFormData({ name: '', email: '', service: SERVICES[0], message: '' });
-        setSelectedDate('');
-        setSelectedTime('');
-        setTimeout(() => setFormMessage(null), 5000);
+        let updatedAppointments = [...bookedAppointments];
+        if (isRescheduleMode && appointmentToReschedule) {
+          updatedAppointments = updatedAppointments.filter(app => app.id !== appointmentToReschedule.id);
+        }
+        updatedAppointments.push(newAppointment);
+
+        localStorage.setItem('bookedAppointments', JSON.stringify(updatedAppointments));
+        setBookedAppointments(updatedAppointments);
+        
+        if (isRescheduleMode && onRescheduleComplete) {
+            setFormMessage('¡Cita reprogramada con éxito! Se ha enviado una confirmación a tu correo.');
+            setTimeout(() => {
+                onRescheduleComplete();
+            }, 2000);
+        } else {
+            setFormMessage('¡Cita agendada con éxito! Se ha enviado una confirmación a tu correo.');
+            setFormData(prev => ({ ...prev, name: '', service: SERVICES[0], message: '', email: currentUser || '' }));
+            setSelectedDate('');
+            setSelectedTime('');
+            setTimeout(() => setFormMessage(null), 5000);
+        }
       })
       .catch((err) => {
         console.error('EMAILJS FAILED:', JSON.stringify(err, null, 2));
-        if (err && err.text === 'The recipients address is empty') {
-            setFormMessage(
-                'Error de Configuración: La dirección del destinatario está vacía. ' +
-                'Por favor, revisa tu panel de EmailJS: ' +
-                '1) En la plantilla de cliente (template_2bio6kd), el campo "To Email" debe ser exactamente "{{to_email}}". ' +
-                '2) En la plantilla para el doctor (template_v9tvb5r), el campo "To Email" debe tener una dirección de correo fija (ej. tu-correo@dominio.com).'
-            );
-        } else {
-            setFormMessage('Hubo un error al agendar la cita. Por favor, revisa los datos o contacta por WhatsApp.');
-        }
-        setTimeout(() => setFormMessage(null), 15000);
+        setFormMessage('Hubo un error al procesar la cita. Por favor, revisa los datos o contacta por WhatsApp.');
+        setTimeout(() => setFormMessage(null), 10000);
       })
       .finally(() => {
-          setIsSubmitting(false);
+          if (!isRescheduleMode) {
+            setIsSubmitting(false);
+          }
       });
   };
 
@@ -151,9 +218,9 @@ const Appointments: React.FC = () => {
     <section id="appointments" className="py-12 md:py-20">
       <div className="container mx-auto px-6">
         <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-text-light mb-2">Agenda tu Cita</h2>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-text-light mb-2">{isRescheduleMode ? 'Reprograma tu Cita' : 'Agenda tu Cita'}</h2>
             <p className="text-lg text-text-light/70 max-w-3xl mx-auto">
-                Elige una fecha y hora. La confirmación se enviará a tu correo.
+                {isRescheduleMode ? 'Elige una nueva fecha y hora para tu consulta.' : 'Elige una fecha y hora. La confirmación se enviará a tu correo.'}
             </p>
              <div className="mt-4 h-1 w-24 bg-secondary mx-auto rounded-full"></div>
         </div>
@@ -163,7 +230,7 @@ const Appointments: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-bold text-text-light/80 mb-1">Nombre Completo</label>
-                  <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} className="w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light" />
+                  <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} disabled={isRescheduleMode} className={`w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light ${isRescheduleMode ? 'bg-gray-700/50 cursor-not-allowed' : ''}`} />
                 </div>
 
                 <div>
@@ -175,7 +242,8 @@ const Appointments: React.FC = () => {
                     required 
                     value={formData.email} 
                     onChange={handleChange} 
-                    className={`w-full px-4 py-2 border bg-background rounded-md focus:ring-secondary focus:border-secondary text-text-light transition-colors ${!isEmailValid && formData.email ? 'border-secondary' : 'border-primary/50'}`} 
+                    disabled={!!currentUser || isRescheduleMode}
+                    className={`w-full px-4 py-2 border bg-background rounded-md focus:ring-secondary focus:border-secondary text-text-light transition-colors ${!isEmailValid && formData.email ? 'border-secondary' : 'border-primary/50'} ${!!currentUser || isRescheduleMode ? 'bg-gray-700/50 cursor-not-allowed' : ''}`}
                   />
                   {!isEmailValid && formData.email && (
                     <p className="text-secondary text-xs mt-1">Por favor, introduce un formato de correo válido.</p>
@@ -185,7 +253,7 @@ const Appointments: React.FC = () => {
 
             <div>
               <label htmlFor="service" className="block text-sm font-bold text-text-light/80 mb-1">Tipo de Consulta</label>
-              <select name="service" id="service" value={formData.service} onChange={handleChange} className="w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light">
+              <select name="service" id="service" value={formData.service} onChange={handleChange} disabled={isRescheduleMode} className={`w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light ${isRescheduleMode ? 'bg-gray-700/50 cursor-not-allowed' : ''}`}>
                 {SERVICES.map(service => (
                   <option key={service} value={service}>{service}</option>
                 ))}
@@ -195,6 +263,9 @@ const Appointments: React.FC = () => {
             <div>
               <label htmlFor="date" className="block text-sm font-bold text-text-light/80 mb-1">1. Selecciona una Fecha</label>
               <input type="date" name="date" id="date" required min={today} value={selectedDate} onChange={handleDateChange} className="w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light" />
+              {dateError && (
+                    <p className="text-secondary text-xs mt-1">{dateError}</p>
+              )}
             </div>
             
             {selectedDate && (
@@ -229,14 +300,14 @@ const Appointments: React.FC = () => {
             </div>
 
             {formMessage && (
-                <p className={`text-center p-3 rounded-md text-sm ${formMessage.startsWith('Error') ? 'bg-red-900/50 text-red-200' : 'bg-accent/20 text-accent'}`}>
+                <p className={`text-center p-3 rounded-md text-sm ${formMessage.includes('Error') ? 'bg-red-900/50 text-red-200' : 'bg-accent/20 text-accent'}`}>
                     {formMessage}
                 </p>
             )}
 
             <div>
               <button type="submit" className="w-full bg-secondary hover:bg-secondary/80 text-white font-bold py-3 px-4 rounded-md transition duration-300 transform hover:scale-105 shadow-lg disabled:bg-secondary/50 disabled:cursor-not-allowed" disabled={!selectedTime || !formData.name || !isEmailValid || isSubmitting}>
-                {isSubmitting ? 'Agendando...' : 'Confirmar Cita'}
+                {isSubmitting ? (isRescheduleMode ? 'Reprogramando...' : 'Agendando...') : (isRescheduleMode ? 'Confirmar Reprogramación' : 'Confirmar Cita')}
               </button>
             </div>
           </form>
