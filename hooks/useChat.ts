@@ -11,11 +11,13 @@ const useChat = () => {
 
   useEffect(() => {
     const initializeChat = () => {
+
       try {
-        if (!process.env.API_KEY) {
-            throw new Error("API_KEY is not set");
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new Error("VITE_GEMINI_API_KEY is not set");
         }
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const ai = new GoogleGenAI({ apiKey });
 
         const productList = PRODUCTS.map(p => `- ${p.name}: ${p.description} Precio: ${p.price}`).join('\n');
         const serviceList = SERVICES.join(', ');

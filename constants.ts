@@ -99,8 +99,14 @@ export const RESCHEDULE_SERVICE_ID = 'service_c9mn2vl';
 export const RESCHEDULE_CLIENT_TEMPLATE_ID = 'template_vm8vyox';
 export const RESCHEDULE_DOCTOR_TEMPLATE_ID = 'template_la74c23';
 
-// For cancelling appointments (new account)
-export const CANCEL_PUBLIC_KEY = 'j77WUmbGakr8qsWCR'; // Can be the same as reschedule key if from the same account
-export const CANCEL_SERVICE_ID = 'service_gnp3r16'; // Can be the same as reschedule ID if from the same account
+// For user cancelling appointments (new account)
+export const CANCEL_PUBLIC_KEY = 'j77WUmbGakr8qsWCR';
+export const CANCEL_SERVICE_ID = 'service_gnp3r16';
 export const CANCEL_CLIENT_TEMPLATE_ID = 'template_qk6r8in';
 export const CANCEL_DOCTOR_TEMPLATE_ID = 'template_t2gbcyn';
+
+// For Taita cancelling appointments (new account, new templates)
+export const ADMIN_CANCEL_PUBLIC_KEY = 'OEuBP3GGsamtt4Uu5';
+export const ADMIN_CANCEL_SERVICE_ID = 'service_oak7wpy';
+export const ADMIN_CANCEL_CLIENT_TEMPLATE_ID = 'template_1fllf2a'; // Template: Admin cancels, notify client
+export const ADMIN_CANCEL_DOCTOR_TEMPLATE_ID = 'template_xoklq82'; // Template: Admin cancels, notify admin

@@ -11,7 +11,7 @@ import {
   RESCHEDULE_CLIENT_TEMPLATE_ID,
   RESCHEDULE_DOCTOR_TEMPLATE_ID,
 } from '../constants';
-import { Appointment } from '../types';
+import { Appointment, User } from '../types';
 
 declare global {
   interface Window {
@@ -22,7 +22,7 @@ declare global {
 }
 
 interface AppointmentsProps {
-  currentUser: string | null;
+  currentUser: User | null;
   appointmentToReschedule?: Appointment | null;
   onRescheduleComplete?: () => void;
 }
@@ -63,9 +63,11 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
       setSelectedDate(''); // Clear date so user must pick a new one
       setSelectedTime('');
     } else if (currentUser) {
-      setFormData(prev => ({ ...prev, email: currentUser, name: '', service: SERVICES[0], message: '' }));
+      setFormData(prev => ({ ...prev, name: currentUser.name, email: currentUser.email, service: SERVICES[0], message: '' }));
       setSelectedDate('');
       setSelectedTime('');
+    } else {
+        setFormData({ name: '', email: '', service: SERVICES[0], message: '' });
     }
   }, [currentUser, isRescheduleMode, appointmentToReschedule]);
 
@@ -226,7 +228,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
             }, 2000);
         } else {
             setFormMessage('¡Cita agendada con éxito! Se ha enviado una confirmación a tu correo.');
-            setFormData(prev => ({ ...prev, name: '', service: SERVICES[0], message: '', email: currentUser || '' }));
+            setFormData(prev => ({ ...prev, name: currentUser?.name || '', service: SERVICES[0], message: '', email: currentUser?.email || '' }));
             setSelectedDate('');
             setSelectedTime('');
             setTimeout(() => setFormMessage(null), 5000);
@@ -264,7 +266,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-bold text-text-light/80 mb-1">Nombre Completo</label>
-                  <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} disabled={isRescheduleMode} className={`w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light ${isRescheduleMode ? 'bg-gray-700/50 cursor-not-allowed' : ''}`} />
+                  <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} disabled={!!currentUser || isRescheduleMode} className={`w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light ${!!currentUser || isRescheduleMode ? 'bg-gray-700/50 cursor-not-allowed' : ''}`} />
                 </div>
 
                 <div>

@@ -1,4 +1,3 @@
-
 export interface Product {
   id: number;
   name: string;
@@ -19,4 +18,10 @@ export interface Appointment {
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
+}
+
+export interface User {
+  email: string;
+  name: string;
+  picture?: string;
 }

@@ -8,7 +8,7 @@ import Footer from './components/Footer';
 import WhatsAppButton from './components/WhatsAppButton';
 import Login from './components/Login';
 import MyAccount from './components/MyAccount';
-import { Appointment } from './types';
+import { Appointment, User } from './types';
 import Chatbot from './components/Chatbot';
 
 export enum Page {
@@ -22,13 +22,19 @@ export enum Page {
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>(Page.Home);
-  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [appointmentToReschedule, setAppointmentToReschedule] = useState<Appointment | null>(null);
+
 
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
     if (storedUser) {
-      setCurrentUser(storedUser);
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+        localStorage.removeItem('currentUser');
+      }
     }
   }, []);
 
@@ -37,27 +43,27 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleLogin = (email: string) => {
-    localStorage.setItem('currentUser', email);
-    setCurrentUser(email);
+  const handleLogin = useCallback((user: User) => {
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    setCurrentUser(user);
     navigate(Page.MyAccount);
-  };
+  }, [navigate]);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem('currentUser');
     setCurrentUser(null);
     navigate(Page.Home);
-  };
+  }, [navigate]);
 
-  const handleStartReschedule = (appointment: Appointment) => {
+  const handleStartReschedule = useCallback((appointment: Appointment) => {
     setAppointmentToReschedule(appointment);
     navigate(Page.Appointments);
-  };
+  }, [navigate]);
 
-  const handleRescheduleComplete = () => {
+  const handleRescheduleComplete = useCallback(() => {
     setAppointmentToReschedule(null);
     navigate(Page.MyAccount);
-  };
+  }, [navigate]);
 
   const renderPage = () => {
     switch (currentPage) {

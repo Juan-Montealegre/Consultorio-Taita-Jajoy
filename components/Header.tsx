@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { Page } from '../App';
 import { LOGO_URL } from '../constants';
+import { User } from '../types';
 
 interface HeaderProps {
   onNavigate: (page: Page) => void;
-  currentUser: string | null;
+  currentUser: User | null;
   onLogout: () => void;
 }
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Appointment } from '../types';
+import { Appointment, User } from '../types';
 import { Page } from '../App';
 import { 
   CANCEL_PUBLIC_KEY,
@@ -18,7 +18,7 @@ declare global {
 }
 
 interface MyAccountProps {
-  currentUser: string;
+  currentUser: User;
   onNavigate: (page: Page) => void;
   onStartReschedule: (appointment: Appointment) => void;
 }
@@ -38,7 +38,7 @@ const MyAccount: React.FC<MyAccountProps> = ({ currentUser, onNavigate, onStartR
 
   const myAppointments = useMemo(() => {
     return allAppointments
-      .filter(app => app.userEmail === currentUser)
+      .filter(app => app.userEmail === currentUser.email)
       .sort((a, b) => new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime());
   }, [allAppointments, currentUser]);
 
@@ -76,9 +76,9 @@ const MyAccount: React.FC<MyAccountProps> = ({ currentUser, onNavigate, onStartR
         setAllAppointments(updatedAppointments);
         setCancellationState({ id: null, status: 'idle' });
 
-      } catch (err: any) {
+      } catch (err) {
         console.error('Failed to send cancellation email:', err);
-        if (err && err.status === 412) {
+        if (err && (err as { status?: number })?.status === 412) {
           setCancellationMessage('Estamos experimentando problemas técnicos con las notificaciones por correo. Tu cita NO ha sido cancelada. Por favor, contáctanos por WhatsApp para gestionar la cancelación. Disculpa las molestias.');
         } else {
           setCancellationMessage('Hubo un error al procesar la cancelación. Por favor, contacta por WhatsApp para confirmar.');
@@ -92,16 +92,56 @@ const MyAccount: React.FC<MyAccountProps> = ({ currentUser, onNavigate, onStartR
     }
   };
 
+  const taitaEmail = import.meta.env.VITE_TAITA_EMAIL;
+  const isAdmin = currentUser.email === taitaEmail;
   return (
     <section className="py-12 md:py-20">
       <div className="container mx-auto px-6">
         <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-serif font-bold text-text-light mb-2">Mis Citas</h2>
             <p className="text-lg text-text-light/70 max-w-3xl mx-auto">
-                Bienvenido/a, <span className="font-bold text-secondary">{currentUser}</span>. Aquí puedes ver y gestionar tus próximas citas.
+                Bienvenido/a, <span className="font-bold text-secondary">{currentUser.name}</span>. Aquí puedes ver y gestionar tus próximas citas.
             </p>
              <div className="mt-4 h-1 w-24 bg-secondary mx-auto rounded-full"></div>
         </div>
+
+        {/* Panel de administración solo para el Taita */}
+        {isAdmin && (
+          <div className="mb-12 p-6 bg-secondary/10 border-2 border-secondary rounded-xl shadow-lg">
+            <h3 className="text-2xl font-bold text-secondary mb-2">Panel de Administrador</h3>
+            <p className="mb-4 text-text-light/80">Acceso exclusivo para el Taita Jajoy. Aquí puedes ver todas las citas agendadas por los usuarios.</p>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-left text-sm">
+                <thead>
+                  <tr className="bg-secondary/20">
+                    <th className="py-2 px-4">Usuario</th>
+                    <th className="py-2 px-4">Correo</th>
+                    <th className="py-2 px-4">Servicio</th>
+                    <th className="py-2 px-4">Fecha</th>
+                    <th className="py-2 px-4">Hora</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allAppointments.length > 0 ? (
+                    allAppointments.map(app => (
+                      <tr key={app.id} className="border-b border-primary/30">
+                        <td className="py-2 px-4">{app.userName}</td>
+                        <td className="py-2 px-4">{app.userEmail}</td>
+                        <td className="py-2 px-4">{app.service}</td>
+                        <td className="py-2 px-4">{new Date(`${app.date}T00:00:00`).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                        <td className="py-2 px-4">{app.time}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-4 text-center text-text-light/60">No hay citas agendadas.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
 
         <div className="max-w-3xl mx-auto space-y-6">
           {cancellationMessage && (
