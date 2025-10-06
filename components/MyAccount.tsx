@@ -6,6 +6,10 @@ import {
   CANCEL_SERVICE_ID,
   CANCEL_CLIENT_TEMPLATE_ID,
   CANCEL_DOCTOR_TEMPLATE_ID,
+  ADMIN_CANCEL_CLIENT_TEMPLATE_ID,
+  ADMIN_CANCEL_DOCTOR_TEMPLATE_ID,
+  ADMIN_CANCEL_PUBLIC_KEY,
+  ADMIN_CANCEL_SERVICE_ID,
 } from '../constants';
 
 
@@ -63,11 +67,16 @@ const MyAccount: React.FC<MyAccountProps> = ({ currentUser, onNavigate, onStartR
         appointment_time: formattedTime,
       };
       
-      const emailjsOptions = { publicKey: CANCEL_PUBLIC_KEY };
-      
       try {
-        await window.emailjs.send(CANCEL_SERVICE_ID, CANCEL_CLIENT_TEMPLATE_ID, emailParams, emailjsOptions);
-        await window.emailjs.send(CANCEL_SERVICE_ID, CANCEL_DOCTOR_TEMPLATE_ID, emailParams, emailjsOptions);
+        if (isAdmin) {
+          const adminOptions = { publicKey: ADMIN_CANCEL_PUBLIC_KEY };
+          await window.emailjs.send(ADMIN_CANCEL_SERVICE_ID, ADMIN_CANCEL_CLIENT_TEMPLATE_ID, emailParams, adminOptions);
+          await window.emailjs.send(ADMIN_CANCEL_SERVICE_ID, ADMIN_CANCEL_DOCTOR_TEMPLATE_ID, emailParams, adminOptions);
+        } else {
+          const emailjsOptions = { publicKey: CANCEL_PUBLIC_KEY };
+          await window.emailjs.send(CANCEL_SERVICE_ID, CANCEL_CLIENT_TEMPLATE_ID, emailParams, emailjsOptions);
+          await window.emailjs.send(CANCEL_SERVICE_ID, CANCEL_DOCTOR_TEMPLATE_ID, emailParams, emailjsOptions);
+        }
 
         const updatedAppointments = allAppointments.filter(app => 
           app.id !== appointmentToCancel.id
@@ -119,22 +128,36 @@ const MyAccount: React.FC<MyAccountProps> = ({ currentUser, onNavigate, onStartR
                     <th className="py-2 px-4">Servicio</th>
                     <th className="py-2 px-4">Fecha</th>
                     <th className="py-2 px-4">Hora</th>
+                    <th className="py-2 px-4">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
                   {allAppointments.length > 0 ? (
-                    allAppointments.map(app => (
-                      <tr key={app.id} className="border-b border-primary/30">
-                        <td className="py-2 px-4">{app.userName}</td>
-                        <td className="py-2 px-4">{app.userEmail}</td>
-                        <td className="py-2 px-4">{app.service}</td>
-                        <td className="py-2 px-4">{new Date(`${app.date}T00:00:00`).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
-                        <td className="py-2 px-4">{app.time}</td>
-                      </tr>
-                    ))
+                    allAppointments.map(app => {
+                      const isCancelling = cancellationState.id === app.id && cancellationState.status === 'sending';
+                      const isError = cancellationState.id === app.id && cancellationState.status === 'error';
+                      return (
+                        <tr key={app.id} className="border-b border-primary/30">
+                          <td className="py-2 px-4">{app.userName}</td>
+                          <td className="py-2 px-4">{app.userEmail}</td>
+                          <td className="py-2 px-4">{app.service}</td>
+                          <td className="py-2 px-4">{new Date(`${app.date}T00:00:00`).toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                          <td className="py-2 px-4">{app.time}</td>
+                          <td className="py-2 px-4">
+                            <button
+                              onClick={() => handleCancel(app)}
+                              disabled={isCancelling}
+                              className={`bg-red-800 hover:bg-red-700 text-white text-xs font-bold py-1 px-3 rounded-full transition-colors duration-300 ${isCancelling ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                              {isCancelling ? 'Cancelando...' : isError ? 'Error, reintentar' : 'Cancelar'}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
-                      <td colSpan={5} className="py-4 text-center text-text-light/60">No hay citas agendadas.</td>
+                      <td colSpan={6} className="py-4 text-center text-text-light/60">No hay citas agendadas.</td>
                     </tr>
                   )}
                 </tbody>

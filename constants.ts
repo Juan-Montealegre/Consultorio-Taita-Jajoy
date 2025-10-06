@@ -106,7 +106,7 @@ export const CANCEL_CLIENT_TEMPLATE_ID = 'template_qk6r8in';
 export const CANCEL_DOCTOR_TEMPLATE_ID = 'template_t2gbcyn';
 
 // For Taita cancelling appointments (new account, new templates)
-export const ADMIN_CANCEL_PUBLIC_KEY = 'OEuBP3GGsamtt4Uu5';
+export const ADMIN_CANCEL_PUBLIC_KEY = 'kloMGEM0nevCyf8ZD';
 export const ADMIN_CANCEL_SERVICE_ID = 'service_oak7wpy';
 export const ADMIN_CANCEL_CLIENT_TEMPLATE_ID = 'template_1fllf2a'; // Template: Admin cancels, notify client
 export const ADMIN_CANCEL_DOCTOR_TEMPLATE_ID = 'template_xoklq82'; // Template: Admin cancels, notify admin
