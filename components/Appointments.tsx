@@ -35,6 +35,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     service: SERVICES[0],
     message: ''
   });
@@ -57,17 +58,18 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
       setFormData({
         name: appointmentToReschedule.userName,
         email: appointmentToReschedule.userEmail,
+        phone: appointmentToReschedule.userPhone || '',
         service: appointmentToReschedule.service,
         message: '' // Clear message as it's context-specific
       });
       setSelectedDate(''); // Clear date so user must pick a new one
       setSelectedTime('');
     } else if (currentUser) {
-      setFormData(prev => ({ ...prev, name: currentUser.name, email: currentUser.email, service: SERVICES[0], message: '' }));
+      setFormData(prev => ({ ...prev, name: currentUser.name, email: currentUser.email, phone: '', service: SERVICES[0], message: '' }));
       setSelectedDate('');
       setSelectedTime('');
     } else {
-        setFormData({ name: '', email: '', service: SERVICES[0], message: '' });
+        setFormData({ name: '', email: '', phone: '', service: SERVICES[0], message: '' });
     }
   }, [currentUser, isRescheduleMode, appointmentToReschedule]);
 
@@ -76,6 +78,18 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(formData.email);
   }, [formData.email]);
+
+  const isPhoneValid = useMemo(() => {
+    if (!formData.phone) return false;
+    const cleanedPhone = formData.phone.replace(/\D/g, '');
+    if (cleanedPhone.startsWith('57') && cleanedPhone.length === 12) {
+      return cleanedPhone.substring(2).startsWith('3');
+    }
+    if (cleanedPhone.length === 10) {
+      return cleanedPhone.startsWith('3');
+    }
+    return false;
+  }, [formData.phone]);
 
   const timeSlots = useMemo(() => {
     if (!selectedDate) return [];
@@ -161,6 +175,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
             to_email: formData.email,
             user_name: formData.name,
             service: formData.service,
+            client_phone: formData.phone,
             old_appointment_date: formattedOldDate,
             old_appointment_time: formattedOldTime,
             new_appointment_date: formattedDate,
@@ -170,6 +185,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
         doctorEmailParams = {
             client_name: formData.name,
             client_email: formData.email,
+            client_phone: formData.phone,
             service: formData.service,
             old_appointment_date: formattedOldDate,
             old_appointment_time: formattedOldTime,
@@ -182,6 +198,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
             to_email: formData.email,
             user_name: formData.name,
             service: formData.service,
+            client_phone: formData.phone,
             appointment_date: formattedDate,
             appointment_time: formattedTime,
         };
@@ -189,6 +206,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
         doctorEmailParams = {
             client_name: formData.name,
             client_email: formData.email,
+            client_phone: formData.phone,
             service: formData.service,
             appointment_date: formattedDate,
             appointment_time: formattedTime,
@@ -210,6 +228,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
           service: formData.service,
           userName: formData.name,
           userEmail: formData.email,
+          userPhone: formData.phone,
         };
         
         let updatedAppointments = [...bookedAppointments];
@@ -228,7 +247,7 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
             }, 2000);
         } else {
             setFormMessage('¡Cita agendada con éxito! Se ha enviado una confirmación a tu correo.');
-            setFormData(prev => ({ ...prev, name: currentUser?.name || '', service: SERVICES[0], message: '', email: currentUser?.email || '' }));
+            setFormData(prev => ({ ...prev, name: currentUser?.name || '', service: SERVICES[0], message: '', email: currentUser?.email || '', phone: '' }));
             setSelectedDate('');
             setSelectedTime('');
             setTimeout(() => setFormMessage(null), 5000);
@@ -254,23 +273,22 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
     <section id="appointments" className="py-12 md:py-20">
       <div className="container mx-auto px-6">
         <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-serif font-bold text-text-light mb-2">{isRescheduleMode ? 'Reprograma tu Cita' : 'Agenda tu Cita'}</h2>
-            <p className="text-lg text-text-light/70 max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-text-dark mb-2">{isRescheduleMode ? 'Reprograma tu Cita' : 'Agenda tu Cita'}</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
                 {isRescheduleMode ? `Cita actual para: ${appointmentToReschedule?.service} el ${new Date(`${appointmentToReschedule?.date}T00:00:00`).toLocaleDateString('es-ES', { month: 'long', day: 'numeric' })}. Elige una nueva fecha y hora.` : 'Elige una fecha y hora. La confirmación se enviará a tu correo.'}
             </p>
-             <div className="mt-4 h-1 w-24 bg-secondary mx-auto rounded-full"></div>
+             <div className="mt-4 h-1 w-24 bg-accent mx-auto rounded-full"></div>
         </div>
         
-        <div className="max-w-2xl mx-auto bg-primary/20 border border-primary/50 p-8 rounded-xl shadow-2xl shadow-primary/10">
+        <div className="max-w-2xl mx-auto bg-content border border-gray-200 p-8 rounded-xl shadow-2xl shadow-primary/10">
           <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="name" className="block text-sm font-bold text-gray-700 mb-1">Nombre Completo</label>
+              <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} disabled={!!currentUser || isRescheduleMode} className={`w-full px-4 py-2 border bg-white border-gray-300 rounded-md focus:ring-secondary focus:border-secondary text-text-dark ${!!currentUser || isRescheduleMode ? 'bg-gray-100 cursor-not-allowed' : ''}`} />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-bold text-text-light/80 mb-1">Nombre Completo</label>
-                  <input type="text" name="name" id="name" required value={formData.name} onChange={handleChange} disabled={!!currentUser || isRescheduleMode} className={`w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light ${!!currentUser || isRescheduleMode ? 'bg-gray-700/50 cursor-not-allowed' : ''}`} />
-                </div>
-
-                <div>
-                  <label htmlFor="email" className="block text-sm font-bold text-text-light/80 mb-1">Correo Electrónico</label>
+                  <label htmlFor="email" className="block text-sm font-bold text-gray-700 mb-1">Correo Electrónico</label>
                   <input 
                     type="email" 
                     name="email" 
@@ -279,17 +297,33 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
                     value={formData.email} 
                     onChange={handleChange} 
                     disabled={!!currentUser || isRescheduleMode}
-                    className={`w-full px-4 py-2 border bg-background rounded-md focus:ring-secondary focus:border-secondary text-text-light transition-colors ${!isEmailValid && formData.email ? 'border-secondary' : 'border-primary/50'} ${!!currentUser || isRescheduleMode ? 'bg-gray-700/50 cursor-not-allowed' : ''}`}
+                    className={`w-full px-4 py-2 border bg-white rounded-md focus:ring-secondary focus:border-secondary text-text-dark transition-colors ${!isEmailValid && formData.email ? 'border-red-500' : 'border-gray-300'} ${!!currentUser || isRescheduleMode ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                   />
                   {!isEmailValid && formData.email && (
-                    <p className="text-secondary text-xs mt-1">Por favor, introduce un formato de correo válido.</p>
+                    <p className="text-red-600 text-xs mt-1">Por favor, introduce un formato de correo válido.</p>
+                  )}
+                </div>
+                 <div>
+                  <label htmlFor="phone" className="block text-sm font-bold text-gray-700 mb-1">Teléfono (Celular)</label>
+                  <input 
+                    type="tel" 
+                    name="phone" 
+                    id="phone" 
+                    required 
+                    value={formData.phone} 
+                    onChange={handleChange}
+                    placeholder="Ej: 300 123 4567"
+                    className={`w-full px-4 py-2 border bg-white rounded-md focus:ring-secondary focus:border-secondary text-text-dark transition-colors ${!isPhoneValid && formData.phone ? 'border-red-500' : 'border-gray-300'}`}
+                  />
+                  {!isPhoneValid && formData.phone && (
+                    <p className="text-red-600 text-xs mt-1">Debe ser un número colombiano válido de 10 dígitos.</p>
                   )}
                 </div>
             </div>
 
             <div>
-              <label htmlFor="service" className="block text-sm font-bold text-text-light/80 mb-1">Tipo de Consulta</label>
-              <select name="service" id="service" value={formData.service} onChange={handleChange} disabled={isRescheduleMode} className={`w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light ${isRescheduleMode ? 'bg-gray-700/50 cursor-not-allowed' : ''}`}>
+              <label htmlFor="service" className="block text-sm font-bold text-gray-700 mb-1">Tipo de Consulta</label>
+              <select name="service" id="service" value={formData.service} onChange={handleChange} disabled={isRescheduleMode} className={`w-full px-4 py-2 border bg-white border-gray-300 rounded-md focus:ring-secondary focus:border-secondary text-text-dark ${isRescheduleMode ? 'bg-gray-100 cursor-not-allowed' : ''}`}>
                 {SERVICES.map(service => (
                   <option key={service} value={service}>{service}</option>
                 ))}
@@ -297,16 +331,16 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
             </div>
 
             <div>
-              <label htmlFor="date" className="block text-sm font-bold text-text-light/80 mb-1">1. Selecciona una Fecha (Lunes a Viernes)</label>
-              <input type="date" name="date" id="date" required min={today} value={selectedDate} onChange={handleDateChange} className="w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light" />
+              <label htmlFor="date" className="block text-sm font-bold text-gray-700 mb-1">1. Selecciona una Fecha (Lunes a Viernes)</label>
+              <input type="date" name="date" id="date" required min={today} value={selectedDate} onChange={handleDateChange} className="w-full px-4 py-2 border bg-white border-gray-300 rounded-md focus:ring-secondary focus:border-secondary text-text-dark" />
               {dateError && (
-                  <p className="text-secondary text-xs mt-1">{dateError}</p>
+                  <p className="text-red-600 text-xs mt-1">{dateError}</p>
               )}
             </div>
             
             {selectedDate && (
               <div>
-                <label className="block text-sm font-bold text-text-light/80 mb-2">2. Selecciona una Hora (9 AM - 4 PM)</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">2. Selecciona una Hora (9 AM - 4 PM)</label>
                 <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {availableTimeSlots.map(({time, isBooked}) => (
                         <button
@@ -316,10 +350,10 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
                           onClick={() => !isBooked && setSelectedTime(time)}
                           className={`p-2 rounded-md text-center text-sm font-semibold transition-colors duration-200 ${
                             isBooked 
-                              ? 'bg-gray-600/50 text-gray-400 cursor-not-allowed line-through'
+                              ? 'bg-gray-200 text-gray-400 cursor-not-allowed line-through'
                               : selectedTime === time 
-                                ? 'bg-secondary text-white ring-2 ring-offset-2 ring-offset-background ring-secondary' 
-                                : 'bg-primary hover:bg-primary/70 text-text-light'
+                                ? 'bg-secondary text-white ring-2 ring-offset-2 ring-offset-white ring-secondary' 
+                                : 'bg-green-100 hover:bg-green-200 text-green-800'
                           }`}
                         >
                           {time}
@@ -331,18 +365,18 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
             )}
 
              <div>
-              <label htmlFor="message" className="block text-sm font-bold text-text-light/80 mb-1">Mensaje Adicional (opcional)</label>
-              <textarea name="message" id="message" rows={3} value={formData.message} onChange={handleChange} className="w-full px-4 py-2 border bg-background border-primary/50 rounded-md focus:ring-secondary focus:border-secondary text-text-light" placeholder={isRescheduleMode ? "Puedes indicar aquí el motivo de la reprogramación..." : "Cuéntanos un poco sobre lo que te gustaría tratar..."}></textarea>
+              <label htmlFor="message" className="block text-sm font-bold text-gray-700 mb-1">Mensaje Adicional (opcional)</label>
+              <textarea name="message" id="message" rows={3} value={formData.message} onChange={handleChange} className="w-full px-4 py-2 border bg-white border-gray-300 rounded-md focus:ring-secondary focus:border-secondary text-text-dark" placeholder={isRescheduleMode ? "Puedes indicar aquí el motivo de la reprogramación..." : "Cuéntanos un poco sobre lo que te gustaría tratar..."}></textarea>
             </div>
 
             {formMessage && (
-                <p className={`text-center p-3 rounded-md text-sm ${formMessage.includes('error') || formMessage.includes('NO ha sido') ? 'bg-red-900/50 text-red-200' : 'bg-accent/20 text-accent'}`}>
+                <p className={`text-center p-3 rounded-md text-sm ${formMessage.includes('error') || formMessage.includes('NO ha sido') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
                     {formMessage}
                 </p>
             )}
 
             <div>
-              <button type="submit" className="w-full bg-secondary hover:bg-secondary/80 text-white font-bold py-3 px-4 rounded-md transition duration-300 transform hover:scale-105 shadow-lg disabled:bg-secondary/50 disabled:cursor-not-allowed" disabled={!selectedTime || !formData.name || !isEmailValid || isSubmitting}>
+              <button type="submit" className="w-full bg-secondary hover:bg-secondary/80 text-white font-bold py-3 px-4 rounded-md transition duration-300 transform hover:scale-105 shadow-lg disabled:bg-secondary/50 disabled:cursor-not-allowed" disabled={!selectedTime || !formData.name || !isEmailValid || !isPhoneValid || isSubmitting}>
                 {isSubmitting ? (isRescheduleMode ? 'Reprogramando...' : 'Agendando...') : (isRescheduleMode ? 'Confirmar Reprogramación' : 'Confirmar Cita')}
               </button>
             </div>

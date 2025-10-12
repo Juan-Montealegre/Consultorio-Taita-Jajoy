@@ -13,6 +13,7 @@ export interface Appointment {
   service: string;
   userName: string;
   userEmail: string;
+  userPhone: string;
 }
 
 export interface ChatMessage {

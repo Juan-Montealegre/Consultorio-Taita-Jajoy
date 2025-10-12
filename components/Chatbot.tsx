@@ -51,11 +51,11 @@ const Chatbot: React.FC = () => {
         <ChatbotIcon />
       </button>
 
-      <div className={`fixed bottom-24 right-6 z-50 w-[90vw] max-w-sm h-[70vh] max-h-[600px] bg-background border-2 border-primary/50 rounded-xl shadow-2xl flex flex-col font-sans overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+      <div className={`fixed bottom-24 right-6 z-50 w-[90vw] max-w-sm h-[70vh] max-h-[600px] bg-content border-2 border-primary/20 rounded-xl shadow-2xl flex flex-col font-sans overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
         {/* Header */}
-        <div className="flex justify-between items-center p-4 bg-primary/30 border-b border-primary/50 flex-shrink-0">
-          <h3 className="text-lg font-bold text-text-light font-serif">Asistente Virtual Yachay</h3>
-          <button onClick={handleToggle} className="text-text-light/70 hover:text-secondary text-3xl font-light leading-none">&times;</button>
+        <div className="flex justify-between items-center p-4 bg-background border-b border-primary/20 flex-shrink-0">
+          <h3 className="text-lg font-bold text-text-dark font-serif">Asistente Virtual Yachay</h3>
+          <button onClick={handleToggle} className="text-gray-500 hover:text-secondary text-3xl font-light leading-none">&times;</button>
         </div>
 
         {/* Messages */}
@@ -67,7 +67,7 @@ const Chatbot: React.FC = () => {
                 className={`max-w-[85%] px-4 py-2 rounded-2xl ${
                   msg.role === 'user' 
                     ? 'bg-secondary text-white rounded-br-none' 
-                    : 'bg-primary/40 text-text-light rounded-bl-none'
+                    : 'bg-gray-100 text-text-dark rounded-bl-none'
                 }`}
               >
                 {msg.role === 'model' ? <MarkdownRenderer text={msg.text} /> : <p className="whitespace-pre-wrap">{msg.text}</p>}
@@ -76,12 +76,12 @@ const Chatbot: React.FC = () => {
           ))}
           {showSuggestions && messages.length === 1 && !isLoading && (
             <div className="flex flex-col items-center gap-2 pt-4">
-              <p className="text-sm text-text-light/60">O prueba una de estas preguntas:</p>
+              <p className="text-sm text-text-dark">O prueba una de estas preguntas:</p>
               {suggestionPrompts.map(prompt => (
                 <button 
                   key={prompt}
                   onClick={() => handleSendMessage(prompt)}
-                  className="w-full text-left bg-primary/20 hover:bg-primary/40 text-text-light/90 text-sm px-4 py-2 rounded-lg transition-colors"
+                  className="w-full text-left bg-gray-100 hover:bg-gray-200 text-text-dark text-sm px-4 py-2 rounded-lg transition-colors"
                 >
                   {prompt}
                 </button>
@@ -91,11 +91,11 @@ const Chatbot: React.FC = () => {
            {isLoading && (
             <div className="flex items-end gap-2.5 justify-start">
               <YachayAvatar />
-              <div className="bg-primary/40 text-text-light px-4 py-3 rounded-2xl rounded-bl-none">
+              <div className="bg-gray-100 text-text-dark px-4 py-3 rounded-2xl rounded-bl-none">
                 <div className="flex items-center space-x-1.5">
-                  <span className="w-2 h-2 bg-text-light/50 rounded-full animate-pulse [animation-delay:-0.3s]"></span>
-                  <span className="w-2 h-2 bg-text-light/50 rounded-full animate-pulse [animation-delay:-0.15s]"></span>
-                  <span className="w-2 h-2 bg-text-light/50 rounded-full animate-pulse"></span>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:-0.3s]"></span>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse [animation-delay:-0.15s]"></span>
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></span>
                 </div>
               </div>
             </div>
@@ -104,15 +104,15 @@ const Chatbot: React.FC = () => {
         </div>
 
         {/* Input */}
-        <div className="p-4 bg-background border-t border-primary/50 flex-shrink-0">
-           {error && <p className="text-xs text-red-400 mb-2">{error}</p>}
+        <div className="p-4 bg-content border-t border-primary/20 flex-shrink-0">
+           {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
           <form onSubmit={handleSubmit} className="flex space-x-2">
             <input
               type="text"
               value={userInput}
               onChange={(e) => setUserInput(e.target.value)}
               placeholder="Escribe tu pregunta..."
-              className="flex-1 px-4 py-2 border bg-primary/20 border-primary/50 rounded-full focus:ring-secondary focus:border-secondary text-text-light"
+              className="flex-1 px-4 py-2 border bg-gray-100 border-gray-300 rounded-full focus:ring-secondary focus:border-secondary text-text-dark"
               disabled={isLoading}
             />
             <button

@@ -59,6 +59,62 @@ export const PRODUCTS: Product[] = [
     price: '$15.000 COL',
     imageUrl: '/productos/Purgante Vegetal Balsam.jpg',
   },
+ {
+    id: 9,
+    name: 'Pomada Varisol',
+    description: 'Nueva pomada para el tratamiento y alivio de la vena várice. Un producto de Verde San para mejorar la circulación.',
+    price: '$6.200 COL',
+    imageUrl: '/productos/Pomada Varisol.jpg',
+  },
+  {
+    id: 10,
+    name: 'Ungüento Chocoano',
+    description: 'Ungüento genérico de uso externo con propiedades analgésicas y antiinflamatorias, ideal para dolores musculares y golpes.',
+    price: '$15.000 COL',
+    imageUrl: '/productos/Ungüento Chocoano.jpg',
+  },
+  {
+    id: 11,
+    name: 'Crema de Andrinas',
+    description: 'Tratamiento facial y corporal para acné, manchas, espinillas, estrías, cicatrices y arrugas prematuras.',
+    price: '$10.100 COL',
+    imageUrl: '/productos/Crema de Andrinas.jpg',
+  },
+  {
+    id: 12,
+    name: 'Pomada Chuchuhuaza YCS',
+    description: 'Con fórmula mejorada, esta pomada aprovecha las propiedades del chuchuhuaza para el alivio de dolores articulares y reumáticos.',
+    price: '$7.400 COL',
+    imageUrl: '/productos/Pomada Chuchuhuaza.jpg',
+  },
+  {
+    id: 13,
+    name: 'Pomada Negra',
+    description: 'Ungüento rubefaciente de uso externo, diseñado para generar calor y aliviar dolores musculares profundos y contracturas.',
+    price: '$20.000 COL',
+    imageUrl: '/productos/Pomada Negra.jpg',
+  },
+  {
+    id: 14,
+    name: 'Ungüento Incaico',
+    description: 'Elaborado por Laboratorio LIPROM, este ungüento combina extractos naturales para aliviar dolores y malestares de forma efectiva.',
+    price: '$18.000 COL',
+    imageUrl: '/productos/Ungüento Incaico.jpg',
+  },
+  {
+    id: 15,
+    name: 'Crema de Azufre',
+    description: 'Fórmula con Penicilina Antibacterial. Especialmente indicada para el tratamiento de afecciones cutáneas como acné, barros y espinillas.',
+    price: '$22.000 COL',
+    imageUrl: '/productos/Crema de Azufre.jpg',
+  },
+  {
+    id: 16,
+    name: 'Crema Caléndula con Azufre',
+    description: 'Combina las propiedades cicatrizantes y antiinflamatorias de la caléndula con el poder antiséptico del azufre para el cuidado de la piel.',
+    price: '$20.000 COL',
+    imageUrl: '/productos/Crema Caléndula con Azufre.jpg',
+  },
 ];
 
 export const SERVICES: string[] = [

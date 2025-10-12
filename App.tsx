@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import Products from './components/Products';
@@ -25,6 +25,10 @@ const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [appointmentToReschedule, setAppointmentToReschedule] = useState<Appointment | null>(null);
 
+  const isAdmin = useMemo(() => {
+    if (!currentUser || !process.env.TAITA_EMAIL) return false;
+    return currentUser.email === process.env.TAITA_EMAIL;
+  }, [currentUser]);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('currentUser');
@@ -43,27 +47,27 @@ const App: React.FC = () => {
     window.scrollTo(0, 0);
   }, []);
 
-  const handleLogin = useCallback((user: User) => {
+  const handleLogin = (user: User) => {
     localStorage.setItem('currentUser', JSON.stringify(user));
     setCurrentUser(user);
     navigate(Page.MyAccount);
-  }, [navigate]);
+  };
 
-  const handleLogout = useCallback(() => {
+  const handleLogout = () => {
     localStorage.removeItem('currentUser');
     setCurrentUser(null);
     navigate(Page.Home);
-  }, [navigate]);
+  };
 
-  const handleStartReschedule = useCallback((appointment: Appointment) => {
+  const handleStartReschedule = (appointment: Appointment) => {
     setAppointmentToReschedule(appointment);
     navigate(Page.Appointments);
-  }, [navigate]);
+  };
 
-  const handleRescheduleComplete = useCallback(() => {
+  const handleRescheduleComplete = () => {
     setAppointmentToReschedule(null);
     navigate(Page.MyAccount);
-  }, [navigate]);
+  };
 
   const renderPage = () => {
     switch (currentPage) {
@@ -76,7 +80,7 @@ const App: React.FC = () => {
       case Page.Login:
         return <Login onLogin={handleLogin} />;
       case Page.MyAccount:
-        return currentUser ? <MyAccount currentUser={currentUser} onNavigate={navigate} onStartReschedule={handleStartReschedule} /> : <Login onLogin={handleLogin} />;
+        return currentUser ? <MyAccount currentUser={currentUser} onNavigate={navigate} onStartReschedule={handleStartReschedule} isAdmin={false} /> : <Login onLogin={handleLogin} />;
       case Page.Home:
       default:
         return (
@@ -85,7 +89,7 @@ const App: React.FC = () => {
             <div className="py-8">
               <Consultations onNavigate={navigate} />
             </div>
-            <div className="py-8 bg-black/20">
+            <div className="py-8 bg-content">
               <Products />
             </div>
             <div className="py-8">
@@ -97,8 +101,8 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col font-sans bg-background text-text-light">
-      <Header onNavigate={navigate} currentUser={currentUser} onLogout={handleLogout} />
+    <div className="min-h-screen flex flex-col font-sans bg-background text-text-dark">
+      <Header onNavigate={navigate} currentUser={currentUser} onLogout={handleLogout} isAdmin={isAdmin} />
       <main className="flex-grow">
         {renderPage()}
       </main>

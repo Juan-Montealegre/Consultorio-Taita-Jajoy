@@ -26,12 +26,9 @@ function decodeJwtResponse(token: string) {
   }
 }
 
-
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const signInButtonRef = useRef<HTMLDivElement>(null);
   const [error, setError] = useState<string | null>(null);
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
 
   const handleCredentialResponse = (response: any) => {
     const idToken = response.credential;
@@ -49,31 +46,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     }
   };
 
-  const handleManualLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email.trim()) {
-      setError('Por favor ingresa tu correo electrónico.');
-      return;
-    }
-    const user: User = {
-      email,
-      name: name || email.split('@')[0],
-      picture: '',
-    };
-    onLogin(user);
-  };
-
   useEffect(() => {
-    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-    if (!clientId) {
-      setError("Error de Configuración: La clave 'VITE_GOOGLE_CLIENT_ID' no se ha añadido a los 'Secrets' del proyecto. Por favor, sigue las INSTRUCCIONES.md para activar el inicio de sesión.");
-      return;
+     if (!process.env.GOOGLE_CLIENT_ID) {
+        setError("El inicio de sesión con Google no está configurado. El administrador debe añadir el GOOGLE_CLIENT_ID.");
+        return;
     }
 
     const initializeGsi = () => {
       if (window.google && signInButtonRef.current) {
         window.google.accounts.id.initialize({
-          client_id: clientId,
+          client_id: process.env.GOOGLE_CLIENT_ID,
           callback: handleCredentialResponse
         });
         window.google.accounts.id.renderButton(
@@ -82,11 +64,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         );
       }
     };
-
+    
     // Check if the script has loaded
     if (window.google) {
       initializeGsi();
     } else {
+      // If not, wait for it.
+      // FIX: Cast the result of querySelector to HTMLScriptElement to access the onload property.
       const script = document.querySelector<HTMLScriptElement>('script[src="https://accounts.google.com/gsi/client"]');
       if (script) {
         script.onload = initializeGsi;
@@ -98,47 +82,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   return (
     <section className="py-12 md:py-20">
       <div className="container mx-auto px-6">
-        <div className="max-w-md mx-auto bg-primary/20 border border-primary/50 p-8 rounded-xl shadow-2xl shadow-primary/10">
-          <h2 className="text-3xl font-serif font-bold text-center text-text-light mb-4">Iniciar Sesión</h2>
-          <p className="text-center text-text-light/70 mb-8">
-            Usa tu cuenta de Google o ingresa tu correo para ver y gestionar tus citas.
+        <div className="max-w-md mx-auto bg-content border border-gray-200 p-8 rounded-xl shadow-2xl shadow-primary/10">
+          <h2 className="text-3xl font-serif font-bold text-center text-text-dark mb-4">Iniciar Sesión</h2>
+          <p className="text-center text-gray-600 mb-8">
+            Usa tu cuenta de Google para ver y gestionar tus citas.
           </p>
-          <form onSubmit={handleManualLogin} className="mb-6">
-            <div className="mb-4">
-              <label htmlFor="email" className="block text-sm font-semibold mb-1 text-text-light">Correo electrónico</label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-primary/50 bg-background text-text-light focus:outline-none focus:ring-2 focus:ring-secondary"
-                placeholder="tucorreo@ejemplo.com"
-                required
-              />
-            </div>
-            <div className="mb-4">
-              <label htmlFor="name" className="block text-sm font-semibold mb-1 text-text-light">Nombre (opcional)</label>
-              <input
-                id="name"
-                type="text"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg border border-primary/50 bg-background text-text-light focus:outline-none focus:ring-2 focus:ring-secondary"
-                placeholder="Tu nombre"
-              />
-            </div>
-            <button
-              type="submit"
-              className="w-full bg-secondary hover:bg-secondary/80 text-white font-bold py-2 rounded-lg transition-colors duration-300"
-            >
-              Ingresar con correo
-            </button>
-          </form>
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center">
             <div ref={signInButtonRef}></div>
           </div>
           {error && (
-            <p className="text-secondary text-xs mt-4 text-center">{error}</p>
+            <p className="text-red-600 text-xs mt-4 text-center">{error}</p>
           )}
         </div>
       </div>
