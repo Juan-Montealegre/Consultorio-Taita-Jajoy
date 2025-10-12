@@ -30,15 +30,29 @@ interface AppointmentsProps {
 const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToReschedule, onRescheduleComplete }) => {
   // State hooks must be declared before any conditional rendering that uses them
   const [bookedAppointments, setBookedAppointments] = useState<Appointment[]>([]);
+  // Cargar citas desde el backend
+  useEffect(() => {
+    fetch('http://localhost:3001/api/citas')
+      .then(res => res.json())
+      .then(data => setBookedAppointments(data))
+      .catch(err => console.error('Error al cargar citas:', err));
+  }, []);
   
   // Mostrar panel de administración solo para el admin
   // ...existing code...
 
   // Render condicional después de los hooks
   // Función para cancelar cita (solo admin)
-  const handleCancelAppointment = (id: string) => {
-    setBookedAppointments(prev => prev.map(cita => cita.id === id ? { ...cita, estado: 'cancelada' } : cita));
-    localStorage.setItem('bookedAppointments', JSON.stringify(bookedAppointments.map(cita => cita.id === id ? { ...cita, estado: 'cancelada' } : cita)));
+  const handleCancelAppointment = async (id: string) => {
+    try {
+      await fetch(`http://localhost:3001/api/citas/${id}/cancelar`, { method: 'PUT' });
+      // Recargar citas después de actualizar
+      const res = await fetch('http://localhost:3001/api/citas');
+      const data = await res.json();
+      setBookedAppointments(data);
+    } catch (err) {
+      console.error('Error al cancelar cita:', err);
+    }
   };
 
   if (currentUser?.tipo === 'admin') {
@@ -79,9 +93,16 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
   }
 
   // Función para marcar cita como completada (solo taita)
-  const handleCompleteAppointment = (id: string) => {
-    setBookedAppointments(prev => prev.map(cita => cita.id === id ? { ...cita, estado: 'completada' } : cita));
-    localStorage.setItem('bookedAppointments', JSON.stringify(bookedAppointments.map(cita => cita.id === id ? { ...cita, estado: 'completada' } : cita)));
+  const handleCompleteAppointment = async (id: string) => {
+    try {
+      await fetch(`http://localhost:3001/api/citas/${id}/completar`, { method: 'PUT' });
+      // Recargar citas después de actualizar
+      const res = await fetch('http://localhost:3001/api/citas');
+      const data = await res.json();
+      setBookedAppointments(data);
+    } catch (err) {
+      console.error('Error al completar cita:', err);
+    }
   };
 
   if (currentUser?.tipo === 'taita') {
