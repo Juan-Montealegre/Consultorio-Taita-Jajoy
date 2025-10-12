@@ -11,7 +11,9 @@ CREATE TABLE usuarios (
     fecha_nacimiento DATE,
     dirección VARCHAR(200),
     género VARCHAR(20),
-    estado VARCHAR(20) DEFAULT 'activo'
+    estado VARCHAR(20) DEFAULT 'activo',
+    google_id VARCHAR(50), -- ID único de Google
+    google_picture VARCHAR(200) -- URL de la foto de perfil de Google
 );
 
 CREATE TABLE productos (

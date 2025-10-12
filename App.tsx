@@ -27,7 +27,9 @@ const App: React.FC = () => {
 
   const isAdmin = useMemo(() => {
     if (!currentUser || !process.env.TAITA_EMAIL) return false;
-    return currentUser.email === process.env.TAITA_EMAIL;
+    // Support multiple admin emails, comma-separated
+    const adminEmails = process.env.TAITA_EMAIL.split(',').map(email => email.trim());
+    return adminEmails.includes(currentUser.email);
   }, [currentUser]);
 
   useEffect(() => {
@@ -80,7 +82,7 @@ const App: React.FC = () => {
       case Page.Login:
         return <Login onLogin={handleLogin} />;
       case Page.MyAccount:
-        return currentUser ? <MyAccount currentUser={currentUser} onNavigate={navigate} onStartReschedule={handleStartReschedule} isAdmin={false} /> : <Login onLogin={handleLogin} />;
+        return currentUser ? <MyAccount currentUser={currentUser} onNavigate={navigate} onStartReschedule={handleStartReschedule} isAdmin={isAdmin} /> : <Login onLogin={handleLogin} />;
       case Page.Home:
       default:
         return (

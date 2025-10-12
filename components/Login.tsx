@@ -35,10 +35,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     const payload = decodeJwtResponse(idToken);
 
     if (payload) {
+      let tipo = 'paciente';
+      if (payload.email === 'taitajajoya@gmail.com') {
+        tipo = 'admin';
+      } else if (payload.email === 'taitajajoy@gmail.com') {
+        tipo = 'taita';
+      }
       const user: User = {
         email: payload.email,
         name: payload.name,
         picture: payload.picture,
+        tipo,
       };
       onLogin(user);
     } else {

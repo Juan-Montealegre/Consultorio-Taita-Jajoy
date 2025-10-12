@@ -28,10 +28,70 @@ interface AppointmentsProps {
 }
 
 const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToReschedule, onRescheduleComplete }) => {
-  const isRescheduleMode = !!appointmentToReschedule;
-
+  // State hooks must be declared before any conditional rendering that uses them
   const [bookedAppointments, setBookedAppointments] = useState<Appointment[]>([]);
   
+  // Mostrar panel de administración solo para el admin
+  // ...existing code...
+
+  // Render condicional después de los hooks
+  if (currentUser?.tipo === 'admin') {
+    return (
+      <section className="py-12 md:py-20">
+        <div className="container mx-auto px-6">
+          <div className="max-w-2xl mx-auto bg-content border border-gray-200 p-8 rounded-xl shadow-2xl shadow-primary/10">
+            <h2 className="text-3xl font-serif font-bold text-center text-text-dark mb-4">Panel de Administración</h2>
+            <p className="text-center text-gray-600 mb-8">Bienvenido, administrador. Aquí puedes gestionar productos, usuarios y citas.</p>
+            <div className="space-y-4">
+              <button className="w-full bg-secondary text-white font-bold py-2 px-4 rounded-md">Gestionar Productos</button>
+              <button className="w-full bg-secondary text-white font-bold py-2 px-4 rounded-md">Gestionar Usuarios</button>
+              <button className="w-full bg-secondary text-white font-bold py-2 px-4 rounded-md">Ver Todas las Citas</button>
+            </div>
+            <div className="mt-8">
+              <h3 className="text-xl font-bold mb-2">Citas recientes</h3>
+              <ul className="divide-y divide-gray-200">
+                {bookedAppointments.slice(0,5).map((cita) => (
+                  <li key={cita.id} className="py-2">
+                    <span className="font-semibold">{cita.userName}</span> - {cita.date} {cita.time} - {cita.service}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (currentUser?.tipo === 'taita') {
+    const citasTaita = bookedAppointments.filter(cita => cita.userEmail === currentUser.email);
+    return (
+      <section className="py-12 md:py-20">
+        <div className="container mx-auto px-6">
+          <div className="max-w-2xl mx-auto bg-content border border-gray-200 p-8 rounded-xl shadow-2xl shadow-primary/10">
+            <h2 className="text-3xl font-serif font-bold text-center text-text-dark mb-4">Citas del Taita Jajoy</h2>
+            <p className="text-center text-gray-600 mb-8">Aquí puedes ver y gestionar tus citas.</p>
+            <div className="mt-8">
+              <h3 className="text-xl font-bold mb-2">Mis citas</h3>
+              {citasTaita.length === 0 ? (
+                <p className="text-gray-500">No tienes citas agendadas.</p>
+              ) : (
+                <ul className="divide-y divide-gray-200">
+                  {citasTaita.map((cita) => (
+                    <li key={cita.id} className="py-2">
+                      <span className="font-semibold">{cita.date} {cita.time}</span> - {cita.service}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+  const isRescheduleMode = !!appointmentToReschedule;
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
