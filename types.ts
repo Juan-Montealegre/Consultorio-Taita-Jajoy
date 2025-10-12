@@ -14,6 +14,7 @@ export interface Appointment {
   userName: string;
   userEmail: string;
   userPhone: string;
+  estado?: string; // pendiente, confirmada, cancelada, completada
 }
 
 export interface ChatMessage {

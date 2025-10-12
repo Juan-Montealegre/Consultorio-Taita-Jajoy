@@ -35,6 +35,12 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
   // ...existing code...
 
   // Render condicional después de los hooks
+  // Función para cancelar cita (solo admin)
+  const handleCancelAppointment = (id: string) => {
+    setBookedAppointments(prev => prev.map(cita => cita.id === id ? { ...cita, estado: 'cancelada' } : cita));
+    localStorage.setItem('bookedAppointments', JSON.stringify(bookedAppointments.map(cita => cita.id === id ? { ...cita, estado: 'cancelada' } : cita)));
+  };
+
   if (currentUser?.tipo === 'admin') {
     return (
       <section className="py-12 md:py-20">
@@ -48,11 +54,20 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
               <button className="w-full bg-secondary text-white font-bold py-2 px-4 rounded-md">Ver Todas las Citas</button>
             </div>
             <div className="mt-8">
-              <h3 className="text-xl font-bold mb-2">Citas recientes</h3>
+              <h3 className="text-xl font-bold mb-2">Todas las citas</h3>
               <ul className="divide-y divide-gray-200">
-                {bookedAppointments.slice(0,5).map((cita) => (
-                  <li key={cita.id} className="py-2">
-                    <span className="font-semibold">{cita.userName}</span> - {cita.date} {cita.time} - {cita.service}
+                {bookedAppointments.map((cita) => (
+                  <li key={cita.id} className="py-2 flex flex-col md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <span className="font-semibold">{cita.userName}</span> ({cita.userEmail})<br/>
+                      <span>{cita.date} {cita.time} - {cita.service}</span><br/>
+                      <span className="text-xs">Estado: {cita.estado || 'pendiente'}</span>
+                    </div>
+                    {cita.estado !== 'cancelada' && (
+                      <button className="bg-red-500 text-white px-3 py-1 rounded-md mt-2 md:mt-0" onClick={() => handleCancelAppointment(cita.id)}>
+                        Cancelar
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -62,6 +77,12 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
       </section>
     );
   }
+
+  // Función para marcar cita como completada (solo taita)
+  const handleCompleteAppointment = (id: string) => {
+    setBookedAppointments(prev => prev.map(cita => cita.id === id ? { ...cita, estado: 'completada' } : cita));
+    localStorage.setItem('bookedAppointments', JSON.stringify(bookedAppointments.map(cita => cita.id === id ? { ...cita, estado: 'completada' } : cita)));
+  };
 
   if (currentUser?.tipo === 'taita') {
     const citasTaita = bookedAppointments.filter(cita => cita.userEmail === currentUser.email);
@@ -78,8 +99,17 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
               ) : (
                 <ul className="divide-y divide-gray-200">
                   {citasTaita.map((cita) => (
-                    <li key={cita.id} className="py-2">
-                      <span className="font-semibold">{cita.date} {cita.time}</span> - {cita.service}
+                    <li key={cita.id} className="py-2 flex flex-col md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <span className="font-semibold">{cita.date} {cita.time}</span> - {cita.service}<br/>
+                        <span>{cita.userName} ({cita.userEmail})</span><br/>
+                        <span className="text-xs">Estado: {cita.estado || 'pendiente'}</span>
+                      </div>
+                      {cita.estado !== 'completada' && (
+                        <button className="bg-green-600 text-white px-3 py-1 rounded-md mt-2 md:mt-0" onClick={() => handleCompleteAppointment(cita.id)}>
+                          Marcar como completada
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>
