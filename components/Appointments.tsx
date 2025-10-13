@@ -136,11 +136,17 @@ const Appointments: React.FC<AppointmentsProps> = ({ currentUser, appointmentToR
   const [dateError, setDateError] = useState<string | null>(null);
 
 
+  // Cargar citas desde el backend Render y actualizar cada 5 segundos
   useEffect(() => {
-    const storedAppointments = localStorage.getItem('bookedAppointments');
-    if (storedAppointments) {
-      setBookedAppointments(JSON.parse(storedAppointments));
-    }
+    const fetchCitas = () => {
+      fetch('https://consultorio-taita-jajoy-1.onrender.com/api/citas')
+        .then(res => res.json())
+        .then(data => setBookedAppointments(data))
+        .catch(err => console.error('Error al cargar citas:', err));
+    };
+    fetchCitas();
+    const interval = setInterval(fetchCitas, 5000); // Actualiza cada 5 segundos
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
