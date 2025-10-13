@@ -12,11 +12,11 @@ app.use(express.json());
 
 // Configuración de la conexión a PostgreSQL
 const pool = new Pool({
-  user: 'postgres', // Cambia por tu usuario
-  host: 'localhost',
-  database: 'consultorio_taita', // Cambia por el nombre de tu base de datos
-  password: 'Sistemas', // Cambia por tu contraseña
-  port: 5432,
+      user: process.env.PGUSER,
+      host: process.env.PGHOST,
+      database: process.env.PGDATABASE,
+      password: process.env.PGPASSWORD,
+      port: process.env.PGPORT,
 });
 // Ruta raíz para mostrar mensaje de bienvenida
 app.get('/', (req, res) => {
