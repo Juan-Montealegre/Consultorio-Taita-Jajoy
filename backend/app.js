@@ -1,18 +1,4 @@
-// Endpoint para obtener todas las citas con datos del paciente
-app.get('/api/citas', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT c.id, c.fecha, c.hora, c.estado, c.service, 
-             u.nombre as userName, u.email as userEmail, u.telefono as userPhone
-      FROM citas c
-      JOIN usuarios u ON c.usuario_id = u.id
-      ORDER BY c.fecha DESC, c.hora DESC
-    `);
-    res.json(result.rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// ...existing code...
 import express from 'express';
 import cors from 'cors';
 import pkg from 'pg';
@@ -49,8 +35,25 @@ app.get('/api/test', async (req, res) => {
 
 // Ejemplo: obtener todos los usuarios
 app.get('/api/usuarios', async (req, res) => {
+
   try {
     const result = await pool.query('SELECT * FROM usuarios');
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Endpoint para obtener todas las citas con datos del paciente
+app.get('/api/citas', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT c.id, c.fecha, c.hora, c.estado, c.service, 
+             u.nombre as userName, u.email as userEmail, u.telefono as userPhone
+      FROM citas c
+      JOIN usuarios u ON c.usuario_id = u.id
+      ORDER BY c.fecha DESC, c.hora DESC
+    `);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
